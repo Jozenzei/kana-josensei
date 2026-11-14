@@ -30,7 +30,7 @@ body{background:radial-gradient(120% 80% at 50% 0%,var(--bg2),var(--bg));color:v
 button{font:inherit;font-weight:700;cursor:pointer;color:var(--ink);background:#2b3270;border:2px solid #4a529a;border-radius:12px;padding:10px 16px}
 button:hover,button:focus-visible{border-color:var(--gold);outline:none}
 button.sel{background:var(--gold);color:#1a1d3a;border-color:var(--gold)}
-#menu,#over{position:absolute;inset:0;background:#0b0e22ee;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center}
+#menu,#over{position:absolute;inset:0;background:#0b0e22ee;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:12px;padding:16px;text-align:center;overflow:auto}
 #over{display:none}
 h1{margin:0;font-size:2.4rem;font-weight:900}
 h1 span{color:var(--hira)}h1 i{font-style:normal;color:var(--kata)}
@@ -38,6 +38,10 @@ p{margin:0;color:var(--dim)}
 .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .lbl{font-size:.95rem;color:var(--dim);margin-top:4px}
 #go{background:var(--gold);color:#1a1d3a;border-color:var(--gold);font-size:1.2rem;padding:12px 34px;margin-top:8px}
+#o-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:100%}
+#o-list span{font-size:1.3rem;font-weight:700;padding:6px 12px;border-radius:10px;background:#0e1126;border:2px solid #4a529a}
+#o-list span.h{color:var(--hira)}#o-list span.t{color:var(--kata)}
+#o-list span em{font-style:normal;color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.k.ok,.k.no,.float{animation-duration:.01s}}
 </style>
 </head>
@@ -57,6 +61,8 @@ p{margin:0;color:var(--dim)}
     <div id="over">
       <h1 id="o-t">Fin del juego</h1>
       <p id="o-s"></p>
+      <p id="o-h"></p>
+      <div id="o-list"></div>
       <button id="again">Volver al menú</button>
     </div>
   </div>
@@ -69,6 +75,7 @@ const R="a i u e o ka ki ku ke ko sa shi su se so ta chi tsu te to na ni nu ne n
 const ALT={shi:["si"],chi:["ti"],tsu:["tu"],fu:["hu"],n:["nn"]};
 const okr=i=>{const r=R[i];return [r].concat(ALT[r]||[]).concat(i===45?["wo"]:[])};
 const $=id=>document.getElementById(id);
+const missed=new Map();
 let set="h",spd=1,items=[],score=0,lives=5,combo=0,run=false,last=0,spawnT=0,buf="",bufT=0,hits=0;
 const SPD=[[45,2.4],[75,1.7],[115,1.2]];
 function pick(g,v){g.querySelectorAll("button").forEach(b=>b.classList.toggle("sel",b===v))}
@@ -77,7 +84,7 @@ $("m-spd").onclick=e=>{if(e.target.dataset.v){spd=+e.target.dataset.v;pick($("m-
 $("go").onclick=start;
 $("again").onclick=()=>{$("over").style.display="none";$("menu").style.display="flex"};
 function start(){
-  items.forEach(o=>o.el.remove());items=[];score=0;lives=5;combo=0;hits=0;buf="";$("inp").value="";
+  items.forEach(o=>o.el.remove());items=[];missed.clear();score=0;lives=5;combo=0;hits=0;buf="";$("inp").value="";
   $("menu").style.display="none";$("over").style.display="none";hud();run=true;last=performance.now();spawnT=0;$("inp").focus();requestAnimationFrame(loop)
 }
 function hud(){$("sc").textContent=score;$("lv").textContent="❤".repeat(lives)+"♡".repeat(5-lives);$("combo").textContent=combo>2?"x"+combo+" racha":""}
@@ -97,7 +104,7 @@ function loop(t){
   if(spawnT<=0){spawn();spawnT=SPD[spd][1]/(1+Math.min(hits,60)*.006)}
   for(const o of items){
     o.y+=o.sp*dt;o.el.style.top=o.y+"px";
-    if(o.y>H_-o.el.offsetHeight){o.dead=1;o.el.className+=" no";setTimeout(()=>o.el.remove(),400);lives--;combo=0;hud();if(lives<=0)end()}
+    if(o.y>H_-o.el.offsetHeight){o.dead=1;missed.set(o.el.textContent,{r:R[o.i],k:o.el.classList.contains("t")});o.el.className+=" no";setTimeout(()=>o.el.remove(),400);lives--;combo=0;hud();if(lives<=0)end()}
   }
   items=items.filter(o=>!o.dead);
   if(buf&&t-bufT>1500){buf="";$("inp").value=""}
@@ -105,7 +112,11 @@ function loop(t){
 }
 function end(){
   run=false;$("o-t").textContent="Fin del juego";
-  $("o-s").textContent=score+" puntos · "+hits+" kana acertados";$("over").style.display="flex"
+  $("o-s").textContent=score+" puntos · "+hits+" kana acertados";
+  const L=$("o-list");L.textContent="";
+  $("o-h").textContent=missed.size?"Para repasar ("+missed.size+"):":"";
+  missed.forEach((v,k)=>{const s=document.createElement("span");s.className=v.k?"t":"h";s.append(k+" - ");const e=document.createElement("em");e.textContent=v.r;s.append(e);L.append(s)});
+  $("over").style.display="flex"
 }
 function tryHit(force){
   if(!buf)return;
