@@ -74,9 +74,9 @@ p{margin:0;color:var(--dim)}
 <script>
 const H="あいうえお かきくけこ さしすせそ たちつてと なにぬねの はひふへほ まみむめも やゆよ らりるれろ わをん".split(" ").join("").split("");
 const T="アイウエオ カキクケコ サシスセソ タチツテト ナニヌネノ ハヒフヘホ マミムメモ ヤユヨ ラリルレロ ワヲン".split(" ").join("").split("");
-const R="a i u e o ka ki ku ke ko sa shi su se so ta chi tsu te to na ni nu ne no ha hi fu he ho ma mi mu me mo ya yu yo ra ri ru re ro wa o n".split(" ");
-const ALT={shi:["si"],chi:["ti"],tsu:["tu"],fu:["hu"],n:["nn"]};
-const okr=i=>{const r=R[i];return [r].concat(ALT[r]||[]).concat(i===45?["wo"]:[])};
+const R="a i u e o ka ki ku ke ko sa shi su se so ta chi tsu te to na ni nu ne no ha hi fu he ho ma mi mu me mo ya yu yo ra ri ru re ro wa wo n".split(" ");
+const ALT={shi:["si"],chi:["ti"],tsu:["tu"],n:["nn"]};
+const okr=i=>{const r=R[i];return [r].concat(ALT[r]||[])};
 const $=id=>document.getElementById(id);
 const missed=new Map();
 const TOUCH=matchMedia("(pointer:coarse)").matches;
@@ -108,14 +108,14 @@ function loop(t){
   if(spawnT<=0){spawn();spawnT=SPD[spd][1]/(1+Math.min(hits,60)*.006)}
   for(const o of items){
     o.y+=o.sp*dt;o.el.style.top=o.y+"px";
-    if(o.y>H_-o.el.offsetHeight){o.dead=1;missed.set(o.el.textContent,{r:R[o.i],k:o.el.classList.contains("t")});o.el.className+=" no";setTimeout(()=>o.el.remove(),400);lives--;combo=0;hud();if(lives<=0)end()}
+    if(o.y>H_-o.el.offsetHeight){o.dead=1;missed.set(o.el.textContent,{r:R[o.i],k:o.el.classList.contains("t")});o.el.className+=" no";setTimeout(()=>o.el.remove(),400);lives--;combo=0;hud();if(lives<=0){end();break}}
   }
   items=items.filter(o=>!o.dead);
   if(buf&&t-bufT>1500){buf="";$("inp").value=""}
   requestAnimationFrame(loop)
 }
 function end(){
-  run=false;$("o-t").textContent="Fin del juego";
+  run=false;document.querySelectorAll("#field .k,#field .float").forEach(e=>e.remove());items=[];buf="";$("inp").value="";$("o-t").textContent="Fin del juego";
   $("o-s").textContent=score+" puntos · "+hits+" kana acertados";
   const L=$("o-list");L.textContent="";
   $("o-h").textContent=missed.size?"Para repasar ("+missed.size+"):":"";
